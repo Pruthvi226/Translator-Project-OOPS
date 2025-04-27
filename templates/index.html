@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Translator App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Translator App</h1>
+
+    <textarea id="inputText" placeholder="Type or Speak..."></textarea>
+
+    <div class="language-select">
+      <select id="sourceLang" placeholder="Select source language..."></select>
+      <div class="arrow" id="swapLangs">⇄</div>
+      <select id="targetLang" placeholder="Select target language..."></select>
+    </div>
+
+    <div class="buttons">
+      <button id="micBtn">🎤 Voice Input</button>
+      <button id="translateBtn">Translate</button>
+      <button id="readAloudBtn">🔊 Read Aloud</button>
+      <button id="clearBtn">🗑 Clear</button>
+    </div>
+
+    <h2>Translated Text:</h2>
+    <textarea id="outputText" readonly></textarea>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+  <script src="/static/script.js"></script>
+</body>
+</html>
