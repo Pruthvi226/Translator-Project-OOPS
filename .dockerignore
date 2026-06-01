@@ -1,0 +1,44 @@
+# Exclude Git files
+.git/
+.gitignore
+.gitattributes
+
+# Exclude Python cache and logs
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+*,cover
+*.log
+
+# Exclude virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Exclude IDE and environment configs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+
+# Exclude duplicate repository folders
+AI-Translator-Pro/
+frontend_temp/
+ANALYSIS.md
+README.md
+test.txt
+
+# Exclude generated audio
+static/*.mp3

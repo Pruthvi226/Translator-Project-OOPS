@@ -1,0 +1,19 @@
+const LANGUAGES = {
+  af: 'Afrikaans', am: 'Amharic', ar: 'Arabic', az: 'Azerbaijani', be: 'Belarusian', bg: 'Bulgarian',
+  bn: 'Bengali', bs: 'Bosnian', ca: 'Catalan', co: 'Corsican', cs: 'Czech', cy: 'Welsh', da: 'Danish',
+  de: 'German', el: 'Greek', en: 'English', eo: 'Esperanto', es: 'Spanish', et: 'Estonian', eu: 'Basque',
+  fa: 'Persian', fi: 'Finnish', fr: 'French', fy: 'Frisian', ga: 'Irish', gd: 'Scots Gaelic', gl: 'Galician',
+  gu: 'Gujarati', ha: 'Hausa', he: 'Hebrew', hi: 'Hindi', hr: 'Croatian', ht: 'Haitian Creole', hu: 'Hungarian',
+  hy: 'Armenian', id: 'Indonesian', ig: 'Igbo', is: 'Icelandic', it: 'Italian', ja: 'Japanese', ka: 'Georgian',
+  kk: 'Kazakh', km: 'Khmer', kn: 'Kannada', ko: 'Korean', ku: 'Kurdish', ky: 'Kyrgyz', la: 'Latin',
+  lb: 'Luxembourgish', lo: 'Lao', lt: 'Lithuanian', lv: 'Latvian', mg: 'Malagasy', mi: 'Maori', mk: 'Macedonian',
+  ml: 'Malayalam', mn: 'Mongolian', mr: 'Marathi', ms: 'Malay', mt: 'Maltese', my: 'Myanmar', ne: 'Nepali',
+  nl: 'Dutch', no: 'Norwegian', ny: 'Chichewa', pa: 'Punjabi', pl: 'Polish', ps: 'Pashto', pt: 'Portuguese',
+  ro: 'Romanian', ru: 'Russian', sd: 'Sindhi', si: 'Sinhala', sk: 'Slovak', sl: 'Slovenian', sm: 'Samoan',
+  sn: 'Shona', so: 'Somali', sq: 'Albanian', sr: 'Serbian', st: 'Sesotho', su: 'Sundanese', sv: 'Swedish',
+  sw: 'Swahili', ta: 'Tamil', te: 'Telugu', tg: 'Tajik', th: 'Thai', tl: 'Filipino', tr: 'Turkish',
+  uk: 'Ukrainian', ur: 'Urdu', uz: 'Uzbek', vi: 'Vietnamese', xh: 'Xhosa', yi: 'Yiddish', yo: 'Yoruba',
+  'zh-cn': 'Chinese (Simplified)', 'zh-tw': 'Chinese (Traditional)', zu: 'Zulu',
+}
+
+export default LANGUAGES

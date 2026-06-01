@@ -1,0 +1,29 @@
+# AI-Translator-Pro Backend
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.0
+pydantic-settings>=2.0.0
+python-multipart>=0.0.6
+
+# Auth
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Translation & TTS (reused from original)
+deep-translator>=1.11.0
+gtts>=2.3.0
+
+# Database (optional: use in-memory without MongoDB)
+motor>=3.3.0
+pymongo>=4.6.0
+
+# AI
+langdetect>=1.0.9
+language-tool-python>=2.7.0
+pytesseract>=0.3.10
+Pillow>=10.0.0
+
+# Optional: Whisper (local)
+# openai-whisper>=20231117
+# Optional: OpenAI API for Whisper
+# openai>=1.0.0

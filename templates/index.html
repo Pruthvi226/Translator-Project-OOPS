@@ -2,34 +2,216 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Translator App</title>
+  <title>Fluent Flow AI - Advanced LLM Translator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- TomSelect for searchable dropdowns -->
   <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+  <!-- Main Stylesheet -->
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <div class="container">
-    <h1>Translator App</h1>
+<body class="dark-theme">
+  <!-- Interactive Background Glows -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
 
-    <textarea id="inputText" placeholder="Type or Speak..."></textarea>
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+        <h1>Fluent<span>Flow AI</span></h1>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggle" class="icon-btn" title="Toggle Light/Dark Theme">
+          <i class="fa-solid fa-sun"></i>
+        </button>
+      </div>
+    </header>
 
-    <div class="language-select">
-      <select id="sourceLang" placeholder="Select source language..."></select>
-      <div class="arrow" id="swapLangs">⇄</div>
-      <select id="targetLang" placeholder="Select target language..."></select>
+    <!-- AI Status Banner -->
+    <div id="aiStatusBanner" class="status-banner standard-mode">
+      <div class="banner-content">
+        <i class="fa-solid fa-circle-info banner-icon"></i>
+        <span id="bannerText">Checking AI translation service connection...</span>
+      </div>
+      <div class="banner-action" id="bannerAction" style="display:none;">
+        <span class="badge">PRO TIP</span> Add <code>GEMINI_API_KEY</code> in `.env` to unlock LLM controls!
+      </div>
     </div>
 
-    <div class="buttons">
-      <button id="micBtn">🎤 Voice Input</button>
-      <button id="translateBtn">Translate</button>
-      <button id="readAloudBtn">🔊 Read Aloud</button>
-      <button id="clearBtn">🗑 Clear</button>
-    </div>
+    <!-- Main Workspace Grid -->
+    <main class="main-container">
+      <div class="translation-grid">
+        
+        <!-- Left Panel: Input -->
+        <div class="card panel-card input-panel">
+          <div class="panel-header">
+            <div class="language-picker">
+              <i class="fa-solid fa-language icon-label"></i>
+              <select id="sourceLang" placeholder="Select source language..."></select>
+            </div>
+            <div class="panel-tag">Source</div>
+          </div>
+          
+          <div class="textarea-wrapper">
+            <textarea id="inputText" placeholder="Enter text to translate or click Voice Input..."></textarea>
+            <div class="textarea-actions">
+              <span id="charCount" class="counter">0 / 5000</span>
+            </div>
+          </div>
 
-    <h2>Translated Text:</h2>
-    <textarea id="outputText" readonly></textarea>
+          <div class="panel-footer">
+            <div class="action-buttons">
+              <button id="micBtn" class="btn btn-secondary">
+                <i class="fa-solid fa-microphone"></i> <span>Voice Input</span>
+              </button>
+              <button id="clearBtn" class="btn btn-tertiary" title="Clear text">
+                <i class="fa-solid fa-trash-can"></i> <span>Clear</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Swap Button (Absolute/Floating) -->
+        <button id="swapLangs" class="swap-button" title="Swap languages">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        </button>
+
+        <!-- Right Panel: Output -->
+        <div class="card panel-card output-panel">
+          <div class="panel-header">
+            <div class="language-picker">
+              <i class="fa-solid fa-globe icon-label"></i>
+              <select id="targetLang" placeholder="Select target language..."></select>
+            </div>
+            <div class="panel-tag">Translation</div>
+          </div>
+
+          <!-- Advanced AI Controls (Tone Selector) -->
+          <div id="aiControls" class="ai-controls-bar" style="display: none;">
+            <div class="control-label">
+              <i class="fa-solid fa-sliders"></i> <span>AI Translation Tone:</span>
+            </div>
+            <div class="tone-select-wrapper">
+              <select id="translationTone">
+                <option value="professional" selected>💼 Professional</option>
+                <option value="formal">👔 Formal / Polite</option>
+                <option value="casual">🍹 Casual / Friendly</option>
+                <option value="academic">🎓 Academic / Detailed</option>
+                <option value="poetic">✨ Creative / Poetic</option>
+                <option value="slang">🔥 Slang / Idiomatic</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="textarea-wrapper">
+            <!-- Simulated Loading Shimmer -->
+            <div id="shimmerLoader" class="shimmer-loader" style="display: none;">
+              <div class="shimmer-line"></div>
+              <div class="shimmer-line"></div>
+              <div class="shimmer-line"></div>
+            </div>
+            <textarea id="outputText" readonly placeholder="Translation will appear here..."></textarea>
+          </div>
+
+          <div class="panel-footer">
+            <div class="action-buttons">
+              <button id="readAloudBtn" class="btn btn-secondary" disabled>
+                <i class="fa-solid fa-volume-high"></i> <span>Read Aloud</span>
+              </button>
+              <button id="copyBtn" class="btn btn-secondary" title="Copy translation" disabled>
+                <i class="fa-solid fa-copy"></i> <span>Copy</span>
+              </button>
+              <button id="translateBtn" class="btn btn-primary">
+                <span>Translate</span> <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Advanced AI Insights Section (Horizontal Grid below primary translation) -->
+      <div id="advancedAISection" class="ai-grid" style="display: none;">
+        
+        <!-- Left Side: Linguistic Insights -->
+        <div class="card ai-card insights-card">
+          <div class="ai-card-header">
+            <div class="ai-title">
+              <i class="fa-solid fa-brain"></i>
+              <h3>Linguistic Insights</h3>
+            </div>
+            <button id="getInsightsBtn" class="btn btn-small btn-ai-sparkle">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Translation
+            </button>
+          </div>
+          
+          <div class="ai-card-body">
+            <div id="insightsEmpty" class="insights-empty">
+              <i class="fa-solid fa-magnifying-glass-chart"></i>
+              <p>Translate text and click "Analyze" to see key grammar breakdowns, cultural idioms, and a vocabulary spotlight!</p>
+            </div>
+            <div id="insightsLoading" class="insights-loading" style="display: none;">
+              <div class="pulse-loader"></div>
+              <p>Analyzing linguistic structure with Gemini LLM...</p>
+            </div>
+            <div id="insightsContent" class="markdown-body insights-content" style="display: none;">
+              <!-- Dynamic Markdown content inserted here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Personal AI Tutor Chat -->
+        <div class="card ai-card tutor-card">
+          <div class="ai-card-header">
+            <div class="ai-title">
+              <i class="fa-solid fa-graduation-cap"></i>
+              <h3>Interactive AI Tutor</h3>
+            </div>
+          </div>
+          
+          <div class="ai-card-body chat-body-wrapper">
+            <div id="chatHistory" class="chat-history">
+              <div class="chat-message bot-message">
+                <div class="message-sender">Fluent Flow AI</div>
+                <div class="message-text">Hello! I am your language tutor. You can ask me questions about your translations, such as:
+                  <ul>
+                    <li>"Why did we use this tense?"</li>
+                    <li>"Can you give me alternate synonyms?"</li>
+                    <li>"How do I pronounce the translated text?"</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chat-input-wrapper">
+              <input type="text" id="chatInput" placeholder="Ask a question about the translation..." disabled>
+              <button id="sendChatBtn" class="chat-send-btn" disabled>
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>&copy; 2026 Fluent Flow AI. Powered by Advanced Gemini LLMs.</p>
+    </footer>
   </div>
 
+  <!-- Toast Notification Wrapper -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- TomSelect & Application scripts -->
   <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
   <script src="/static/script.js"></script>
 </body>
