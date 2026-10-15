@@ -4,9 +4,9 @@ The repository is prepared for a single-instance Linux VM/container host with
 Docker Compose, PostgreSQL and a TLS ingress. No cloud resources are created by
 the local setup. Choose the account, region, budget and domain before provisioning.
 
-The user selected VibeNest. Use [the dedicated VibeNest guide](VIBENEST.md) for its
-single-container GitHub deployment flow; the Compose procedure below remains
-available for local development and self-managed hosts.
+The active target is AWS. See [the AWS deployment templates and guide](aws/README.md).
+The earlier [VibeNest guide](VIBENEST.md) remains available as an alternative;
+the Compose procedure below supports local development and self-managed hosts.
 
 1. Run CI and review `docs/VERIFICATION.md`. Set a stable secret, a URL-safe database
    password and provider key using your cloud secret manager. Never copy a developer
