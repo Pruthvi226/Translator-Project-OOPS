@@ -621,7 +621,7 @@ class TranslationApp {
     if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i>';
     if (type === 'error') icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
     
-    toast.innerHTML = `${icon} <span>${message}</span>`;
+    toast.innerHTML = `${icon} <span>${this.escapeHtml(String(message))}</span>`;
     container.appendChild(toast);
 
     // Auto dismiss after 3 seconds
@@ -643,7 +643,7 @@ class TranslationApp {
   // COMPILER: Mini Markdown to Beautiful HTML converter
   // Formats headers, lists, bold elements, and converts tables perfectly!
   parseSimpleMarkdown(md) {
-    let html = md;
+    let html = this.escapeHtml(String(md));
 
     // 1. Escaping script and HTML tags to prevent cross site script injection (XSS)
     // Avoid double-escaping by doing text conversions carefully.

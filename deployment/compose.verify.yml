@@ -1,0 +1,31 @@
+# Isolated smoke-test deployment. Dummy credentials, no provider key, no retained volume.
+# Never use these credentials or this file for production.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: fluentflow
+      POSTGRES_DB: fluentflow
+      POSTGRES_PASSWORD: smoke-test-only
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluentflow -d fluentflow"]
+      interval: 2s
+      retries: 30
+  api:
+    image: fluentflow-api:local-verified
+    ports: ["127.0.0.1:18081:8000"]
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+psycopg://fluentflow:smoke-test-only@db:5432/fluentflow
+      JWT_SECRET: fluentflow-smoke-test-only-secret-never-use-in-production
+      GEMINI_API_KEY: ''
+      RATE_LIMIT: 200
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    image: fluentflow-web:local-verified
+    ports: ["127.0.0.1:18080:8080"]
+    depends_on: [api]

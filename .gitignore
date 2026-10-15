@@ -31,3 +31,11 @@ static/*.mp3
 .DS_Store
 Thumbs.db
 *.log
+*.db
+*.db-*
+artifacts/
+test-results/
+playwright-report/
+evaluation/results/
+.ruff_cache/
+pytest-cache-files-*/
