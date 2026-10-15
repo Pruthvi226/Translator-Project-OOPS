@@ -261,9 +261,10 @@ CI runs lint, deterministic tests, frontend build, browser tests, container buil
 and an isolated PostgreSQL HTTP smoke test. A manually triggered publish workflow
 builds immutable SHA-tagged images in GHCR. The default root Docker image also
 serves React directly, providing a single-service deployment for the selected
-VibeNest host. See [VibeNest configuration](deployment/VIBENEST.md) and the
-[production runbook](deployment/README.md). Cloud deployment has not been executed;
-authenticated GitHub/VibeNest access and secret configuration remain necessary.
+Docker hosts. The active AWS deployment uses prepared ECS Express Mode/RDS
+[CloudFormation templates](deployment/aws/README.md). The earlier
+[VibeNest configuration](deployment/VIBENEST.md) remains available. Cloud deployment
+has not been executed; AWS sign-in, region, budget and secret configuration are pending.
 
 ## Security and current limitations
 

@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FluentFlow ECS Express Mode HTTPS service. Requires a populated ECR image and foundation stack.
+Parameters:
+  FoundationStack:
+    Type: String
+    Default: fluentflow-foundation
+    AllowedPattern: '[A-Za-z][A-Za-z0-9-]*'
+  ImageUri:
+    Type: String
+    Description: Immutable image URI from the foundation ECR repository, tagged with a reviewed Git SHA.
+    AllowedPattern: '[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/[a-z0-9/_-]+:[A-Za-z0-9_.-]+'
+  ServiceName:
+    Type: String
+    Default: fluentflow-ai
+    AllowedPattern: '[a-z][a-z0-9-]{2,40}'
+Resources:
+  Service:
+    Type: AWS::ECS::ExpressGatewayService
+    Properties:
+      ServiceName: !Ref ServiceName
+      Cluster:
+        Fn::ImportValue: !Sub '${FoundationStack}-Cluster'
+      Cpu: '512'
+      Memory: '2048'
+      ExecutionRoleArn:
+        Fn::ImportValue: !Sub '${FoundationStack}-ExecutionRole'
+      InfrastructureRoleArn:
+        Fn::ImportValue: !Sub '${FoundationStack}-InfrastructureRole'
+      HealthCheckPath: /health/live
+      NetworkConfiguration:
+        Subnets:
+          Fn::Split:
+            - ','
+            - Fn::ImportValue: !Sub '${FoundationStack}-Subnets'
+        SecurityGroups:
+          - Fn::ImportValue: !Sub '${FoundationStack}-DatabaseAccessGroup'
+      ScalingTarget:
+        MinTaskCount: 1
+        MaxTaskCount: 1
+        AutoScalingMetric: AVERAGE_CPU
+        AutoScalingTargetValue: 60
+      PrimaryContainer:
+        Image: !Ref ImageUri
+        ContainerPort: 8000
+        AwsLogsConfiguration:
+          LogGroup:
+            Fn::ImportValue: !Sub '${FoundationStack}-Logs'
+          LogStreamPrefix: fluentflow
+        Environment:
+          - {Name: ENVIRONMENT, Value: production}
+          - {Name: PORT, Value: '8000'}
+          - {Name: PROVIDER_ORDER, Value: gemini}
+          - {Name: ENABLE_NLLB, Value: 'false'}
+          - {Name: ENABLE_SPEECH, Value: 'false'}
+          - {Name: ENABLE_RAG, Value: 'false'}
+          - {Name: ENABLE_DEEP_TRANSLATOR, Value: 'false'}
+          - {Name: RETENTION_DAYS, Value: '30'}
+        Secrets:
+          - Name: DATABASE_URL
+            ValueFrom:
+              Fn::ImportValue: !Sub '${FoundationStack}-DatabaseUrl'
+          - Name: JWT_SECRET
+            ValueFrom:
+              Fn::ImportValue: !Sub '${FoundationStack}-JwtSecret'
+          - Name: GEMINI_API_KEY
+            ValueFrom:
+              Fn::ImportValue: !Sub '${FoundationStack}-GeminiSecret'
+Outputs:
+  Endpoint:
+    Value: !GetAtt Service.Endpoint
+  ServiceArn:
+    Value: !GetAtt Service.ServiceArn

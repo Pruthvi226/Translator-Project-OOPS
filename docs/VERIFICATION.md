@@ -21,6 +21,7 @@ for the target hardware before enabling those services.
 | Full-stack Linux image | Passed with exact pinned local Linux wheels; the normal package-index build hit Docker TLS timeouts |
 | Live PostgreSQL HTTP integration | Passed through Nginx and through the standalone full-stack API image: accounts, auth, persistence, ownership, deletion, unavailable providers and usage |
 | Native OCR | Tesseract/OpenCV synthetic English image smoke check passed inside the Linux image; not an accuracy benchmark |
+| AWS infrastructure | ECS Express Mode/RDS foundation and service templates pass local cfn-lint; not provisioned or verified against an AWS account |
 | Screenshots | Desktop 1440 px and mobile 390 px inspected; mobile tutor banner corrected; no horizontal overflow in translation-flow browser assertions |
 
 Python's current Starlette TestClient emits a non-failing deprecation warning about

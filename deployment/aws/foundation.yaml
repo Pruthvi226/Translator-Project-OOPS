@@ -1,0 +1,255 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FluentFlow AWS foundation - private PostgreSQL, ECR, secrets and ECS roles. Creates billable resources.
+Parameters:
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    MinLength: 1
+    Description: Enter via the CloudFormation console or SDK, never commit this value.
+  DatabaseClass:
+    Type: String
+    Default: db.t4g.micro
+    AllowedValues: [db.t4g.micro, db.t4g.small, db.t4g.medium]
+  MultiAZ:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+Conditions:
+  HighlyAvailableDatabase: !Equals [!Ref MultiAZ, 'true']
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.80.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: [{Key: Name, Value: !Sub '${AWS::StackName}-vpc'}]
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+  PublicA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.80.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+  PublicB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.80.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+  PrivateA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.80.11.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+  PrivateB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.80.12.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+  PublicRoutes:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+  PublicInternet:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRoutes
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicRouteA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicA
+      RouteTableId: !Ref PublicRoutes
+  PublicRouteB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicB
+      RouteTableId: !Ref PublicRoutes
+  PrivateRoutes:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+  PrivateRouteA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateA
+      RouteTableId: !Ref PrivateRoutes
+  PrivateRouteB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateB
+      RouteTableId: !Ref PrivateRoutes
+  AppDatabaseAccess:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Additional ECS task identity for private database access; no inbound rules
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+  DatabaseSecurity:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PostgreSQL accepts traffic only from FluentFlow tasks
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref AppDatabaseAccess
+  DatabaseSubnets:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private FluentFlow database subnets
+      SubnetIds: [!Ref PrivateA, !Ref PrivateB]
+  DatabaseCredentials:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: FluentFlow initial database owner credentials; rotate together with DSN secret
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"fluentflow"}'
+        GenerateStringKey: password
+        PasswordLength: 40
+        ExcludePunctuation: true
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: postgres
+      DBName: fluentflow
+      DBInstanceClass: !Ref DatabaseClass
+      AllocatedStorage: '20'
+      MaxAllocatedStorage: 50
+      StorageType: gp3
+      StorageEncrypted: true
+      PubliclyAccessible: false
+      MultiAZ: !If [HighlyAvailableDatabase, true, false]
+      BackupRetentionPeriod: 7
+      DeletionProtection: true
+      MasterUsername: fluentflow
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DatabaseCredentials}:SecretString:password}}'
+      DBSubnetGroupName: !Ref DatabaseSubnets
+      VPCSecurityGroups: [!GetAtt DatabaseSecurity.GroupId]
+      AutoMinorVersionUpgrade: true
+      CopyTagsToSnapshot: true
+  DatabaseUrl:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: FluentFlow encrypted PostgreSQL connection URL
+      SecretString: !Sub 'postgresql+psycopg://fluentflow:{{resolve:secretsmanager:${DatabaseCredentials}:SecretString:password}}@${Database.Endpoint.Address}:${Database.Endpoint.Port}/fluentflow?sslmode=require'
+  JwtSecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      GenerateSecretString:
+        PasswordLength: 64
+        ExcludePunctuation: true
+  GeminiSecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      SecretString: !Ref GeminiApiKey
+  Repository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      ImageTagMutability: IMMUTABLE
+      EncryptionConfiguration: {EncryptionType: AES256}
+      ImageScanningConfiguration: {ScanOnPush: true}
+      LifecyclePolicy:
+        LifecyclePolicyText: '{"rules":[{"rulePriority":1,"description":"Remove untagged build images after seven days","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countUnit":"days","countNumber":7},"action":{"type":"expire"}}]}'
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterSettings: [{Name: containerInsights, Value: enabled}]
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs-tasks.amazonaws.com}
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals: {aws:SourceAccount: !Ref 'AWS::AccountId'}
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Policies:
+        - PolicyName: ReadFluentFlowSecrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: [!Ref DatabaseUrl, !Ref JwtSecret, !Ref GeminiSecret]
+  InfrastructureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ecs.amazonaws.com}
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals: {aws:SourceAccount: !Ref 'AWS::AccountId'}
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices'
+Outputs:
+  RepositoryUri:
+    Value: !GetAtt Repository.RepositoryUri
+  ClusterArn:
+    Value: !GetAtt Cluster.Arn
+    Export: {Name: !Sub '${AWS::StackName}-Cluster'}
+  Subnets:
+    Value: !Join [',', [!Ref PublicA, !Ref PublicB]]
+    Export: {Name: !Sub '${AWS::StackName}-Subnets'}
+  DatabaseAccessGroup:
+    Value: !GetAtt AppDatabaseAccess.GroupId
+    Export: {Name: !Sub '${AWS::StackName}-DatabaseAccessGroup'}
+  ExecutionRoleArn:
+    Value: !GetAtt ExecutionRole.Arn
+    Export: {Name: !Sub '${AWS::StackName}-ExecutionRole'}
+  InfrastructureRoleArn:
+    Value: !GetAtt InfrastructureRole.Arn
+    Export: {Name: !Sub '${AWS::StackName}-InfrastructureRole'}
+  DatabaseUrlSecretArn:
+    Value: !Ref DatabaseUrl
+    Export: {Name: !Sub '${AWS::StackName}-DatabaseUrl'}
+  JwtSecretArn:
+    Value: !Ref JwtSecret
+    Export: {Name: !Sub '${AWS::StackName}-JwtSecret'}
+  GeminiSecretArn:
+    Value: !Ref GeminiSecret
+    Export: {Name: !Sub '${AWS::StackName}-GeminiSecret'}
+  LogGroupName:
+    Value: !Ref LogGroup
+    Export: {Name: !Sub '${AWS::StackName}-Logs'}
