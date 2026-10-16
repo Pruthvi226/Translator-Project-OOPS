@@ -10,7 +10,7 @@ for the target hardware before enabling those services.
 | --- | --- |
 | Full Python suite | **26 passed**; no paid APIs or model downloads |
 | Document/service tests after final table-order change | **7 passed** |
-| React component suite | **3 passed** |
+| React/component/API-client suite | **7 passed**, including Pages offline routing and account-data safeguards |
 | Desktop/mobile Playwright suite | **4 passed**, including actual malicious model output rendered as text |
 | Frontend production build | Passed; JS about 268 kB / 82 kB gzip, CSS about 29 kB / 7 kB gzip |
 | Ruff on backend, tests, evaluation and legacy app | Passed |

@@ -1,9 +1,12 @@
 let token = '';
+const apiOrigin = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+export const apiAvailable = !(import.meta.env.VITE_STATIC_ONLY === 'true' && !apiOrigin);
 export const setToken = (value) => { token = value; };
 export async function api(path, options = {}) {
+  if (!apiAvailable) throw new Error('Translation service is not connected yet.');
   const { raw = false, ...init } = options;
   const form = init.body instanceof FormData;
-  const response = await fetch(`/api/v1${path}`, {
+  const response = await fetch(`${apiOrigin}/api/v1${path}`, {
     ...init,
     headers: { ...(form ? {} : { 'Content-Type': 'application/json' }), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers },
     signal: init.signal || AbortSignal.timeout(180000)

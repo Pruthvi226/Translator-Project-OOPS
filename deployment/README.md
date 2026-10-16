@@ -1,5 +1,8 @@
 # Production deployment runbook
 
+The active static frontend host is GitHub Pages. See [the Pages guide](GITHUB_PAGES.md).
+The server/container options below remain alternatives for hosting the required Python API.
+
 The repository is prepared for a single-instance Linux VM/container host with
 Docker Compose, PostgreSQL and a TLS ingress. No cloud resources are created by
 the local setup. Choose the account, region, budget and domain before provisioning.

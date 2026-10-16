@@ -31,3 +31,13 @@ test('evaluation never invents quality metrics', async () => {
   expect(screen.getByText(/No quality benchmark has been measured yet/)).toBeVisible();
   await waitFor(() => expect(screen.getByText('Provider setup needed')).toBeVisible());
 });
+
+test('an unavailable service is reported instead of staying in a connecting state', async () => {
+  globalThis.fetch.mockRejectedValue(new Error('offline'));
+  render(<App/>);
+  await waitFor(() => expect(screen.getByText('Translation service offline')).toBeVisible());
+  expect(screen.getByRole('status')).toHaveTextContent('Translation service is not connected');
+  fireEvent.change(screen.getByLabelText('Text to translate'), { target: { value: 'Hello' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Translate' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});

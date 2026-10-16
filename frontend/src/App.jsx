@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowDownToLine, ArrowLeftRight, ArrowRight, AudioLines, BookOpen, Check, ChevronRight, Clipboard, FileText, Globe2, History, Image, Languages, LayoutDashboard, LogOut, Menu, MessageCircle, Mic, Moon, Plus, Send, Settings, ShieldCheck, Sparkles, Sun, Trash2, Volume2, X } from 'lucide-react';
-import { api, download, setToken } from './api';
+import { api, apiAvailable, download, setToken } from './api';
 
 const defaultLanguages = { en: 'English', hi: 'Hindi', kn: 'Kannada', ta: 'Tamil', te: 'Telugu', mr: 'Marathi', bn: 'Bengali', es: 'Spanish', fr: 'French', de: 'German', ja: 'Japanese', ar: 'Arabic' };
 const navigation = [['translate', Languages, 'Translation studio'], ['tutor', MessageCircle, 'Language tutor'], ['history', History, 'Your translations'], ['vocabulary', BookOpen, 'Vocabulary'], ['evaluation', LayoutDashboard, 'Usage & evaluation']];
@@ -13,8 +13,9 @@ export default function App() {
   const [theme, setTheme] = useState(initialTheme);
   const [mobile, setMobile] = useState(false);
   const [caps, setCaps] = useState(null);
+  const [serviceOffline, setServiceOffline] = useState(false);
   const [user, setUser] = useState(null);
-  const [auth, setAuth] = useState(null);
+  const [auth, setAuthState] = useState(null);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState('');
@@ -43,7 +44,7 @@ export default function App() {
   const languages = caps?.languages || defaultLanguages;
   const message = (error) => { setNotice(error.message || String(error)); if (error.status === 401) { setToken(''); setUser(null); setAuth('login'); } };
 
-  useEffect(() => { api('/capabilities').then(setCaps).catch(() => setNotice('The API is unavailable. Start the backend to connect your workspace.')); }, []);
+  useEffect(() => { api('/capabilities').then(setCaps).catch(() => { setServiceOffline(true); if (apiAvailable) setNotice('Translation service is unavailable. Please try again later.'); }); }, []);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     try { localStorage.setItem('fluentflow-theme', theme); } catch { /* private browsing */ }
@@ -67,7 +68,8 @@ export default function App() {
     return () => clearInterval(timer);
   }, [job]);
 
-  const requireUser = () => { if (user) return true; setAuth('signup'); return false; };
+  const setAuth = (value) => { if (value && serviceOffline) { setNotice('Translation service is not connected yet.'); return; } setAuthState(value); };
+  const requireUser = () => { if (serviceOffline) { setNotice('Translation service is not connected yet.'); return false; } if (user) return true; setAuth('signup'); return false; };
   async function authenticate(event) {
     event.preventDefault(); setBusy(true);
     const data = Object.fromEntries(new FormData(event.currentTarget));
@@ -156,9 +158,10 @@ export default function App() {
     </aside>
     {mobile && <button className="sidebar-overlay" aria-label="Close navigation" onClick={() => setMobile(false)}/>}
     <div className="main-shell">
-      <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={20}/></button><span>Workspace</span><ChevronRight size={14}/><strong>{page === 'translate' ? 'Translation studio' : title}</strong></div><div className="top-actions"><span className={`connection ${caps?.providers.length ? 'connected' : ''}`}><span/>{caps === null ? 'Connecting to API' : caps.providers.length ? 'Providers configured' : 'Provider setup needed'}</span><button className="icon-button" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`} onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Moon size={18}/> : <Sun size={18}/>}</button>{user ? <button className="text-button" disabled={busy} onClick={logout}><LogOut size={16}/> Sign out</button> : <button className="small-primary" onClick={() => setAuth('login')}>Sign in <ArrowRight size={14}/></button>}</div></header>
+      <header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={20}/></button><span>Workspace</span><ChevronRight size={14}/><strong>{page === 'translate' ? 'Translation studio' : title}</strong></div><div className="top-actions"><span className={`connection ${caps?.providers.length ? 'connected' : ''}`}><span/>{serviceOffline ? 'Translation service offline' : caps === null ? 'Connecting to API' : caps.providers.length ? 'Providers configured' : 'Provider setup needed'}</span><button className="icon-button" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`} onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Moon size={18}/> : <Sun size={18}/>}</button>{user ? <button className="text-button" disabled={busy} onClick={logout}><LogOut size={16}/> Sign out</button> : <button className="small-primary" disabled={serviceOffline} onClick={() => setAuth('login')}>Sign in <ArrowRight size={14}/></button>}</div></header>
       <main>
         <div className="page-heading"><div><div className="eyebrow"><span/> LANGUAGE WITHOUT LIMITS</div><h1>{title}<span className="heading-dot">.</span></h1><p>{page === 'translate' ? 'Find the right words. Keep the original feeling.' : 'Turn everyday curiosity into lasting understanding.'}</p></div>{page === 'translate' && <div className="heading-note"><Globe2 size={17}/><span>Different languages.<br/><strong>One human connection.</strong></span></div>}</div>
+        {serviceOffline && <div className="service-notice" role="status"><Globe2 size={18}/><span>Translation service is not connected. Explore the workspace; translation and account features will be available when the service is online.</span></div>}
         {page === 'home' && <section className="hero panel"><span className="pill"><Sparkles size={15}/> Multimodal translation & intelligent language learning</span><h2>More than words.<br/><em>A way to connect.</em></h2><p>Translate a thought, a conversation, or a page. Then explore the grammar, context, and culture that bring it to life.</p><button className="primary" onClick={() => navigate('translate')}>Open translation studio <ArrowRight size={18}/></button><div className="hero-features">{modes.map(([id, Icon, label]) => <button key={id} onClick={() => { setMode(id); navigate('translate'); }}><Icon size={24}/>{label} translation <ArrowRight size={15}/></button>)}</div></section>}
         {page === 'translate' && <>
           <div className="studio-toolbar"><div className="mode-tabs" role="tablist" aria-label="Translation mode">{modes.map(([id, Icon, label]) => <button key={id} role="tab" aria-selected={mode === id} className={mode === id ? 'selected' : ''} disabled={busy} onClick={() => { setMode(id); setFile(null); setJob(null); setResult(null); }}><Icon size={17}/>{label}</button>)}</div><span className="privacy-caption"><ShieldCheck size={15}/> Private by design</span></div>

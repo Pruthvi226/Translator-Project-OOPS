@@ -103,6 +103,15 @@ those upstream files are preserved for reference. The maintained FluentFlow AI
 application lives in the root `backend/` and `frontend/` folders described above.
 See [the baseline audit and roadmap](docs/ROADMAP.md).
 
+## GitHub Pages
+
+The frontend is published at **https://pruthvi226.github.io/Translator-Project-OOPS/**.
+GitHub Pages serves the React interface only. Translation, sign-in, tutor, OCR,
+speech and persistence require the Python API to be hosted separately. Without
+an API configured, the site shows an offline service notice and blocks API calls.
+See [GitHub Pages setup and backend connection](deployment/GITHUB_PAGES.md).
+The Pages workflow publishes the frontend automatically from `master`.
+
 ## Local setup
 
 Use Python 3.11+ and Node.js 22. From this repository:
