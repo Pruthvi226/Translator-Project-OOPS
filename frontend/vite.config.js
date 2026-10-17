@@ -4,5 +4,5 @@ export default defineConfig(({ mode }) => ({
   base: loadEnv(mode, process.cwd(), '').VITE_BASE_PATH || '/',
   plugins: [react()],
   server: { proxy: { '/api': 'http://127.0.0.1:8000', '/health': 'http://127.0.0.1:8000' } },
-  test: { environment: 'jsdom', setupFiles: ['./src/test-setup.js'], exclude: ['e2e/**', 'node_modules/**'] }
+  test: { environment: 'jsdom', setupFiles: ['./src/test-setup.js'], exclude: ['e2e/**', 'browser-e2e/**', 'node_modules/**'] }
 }));

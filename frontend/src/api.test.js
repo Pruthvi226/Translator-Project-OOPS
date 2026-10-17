@@ -10,7 +10,7 @@ test('static hosting without a backend never sends account data', async () => {
   vi.stubGlobal('fetch', fetch);
   const { api, apiAvailable } = await import('./api');
   expect(apiAvailable).toBe(false);
-  await expect(api('/auth/login', { method: 'POST', body: JSON.stringify({ password: 'test-only' }) })).rejects.toThrow('not connected');
+  await expect(api('/auth/login', { method: 'POST', body: JSON.stringify({ password: 'test-only' }) })).rejects.toThrow('unavailable in browser-only mode');
   expect(fetch).not.toHaveBeenCalled();
 });
 

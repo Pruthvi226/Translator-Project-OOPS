@@ -106,9 +106,12 @@ See [the baseline audit and roadmap](docs/ROADMAP.md).
 ## GitHub Pages
 
 The frontend is published at **https://pruthvi226.github.io/Translator-Project-OOPS/**.
-GitHub Pages serves the React interface only. Translation, sign-in, tutor, OCR,
-speech and persistence require the Python API to be hosted separately. Without
-an API configured, the site shows an offline service notice and blocks API calls.
+The Pages build works without an account or hosted backend: text translation uses
+MyMemory's free public API; image OCR and PDF/DOCX/TXT text extraction run in the
+browser. Browser dictation and speech playback depend on device support. History,
+vocabulary and preferences are saved on this device. Choose a source language;
+the free service has a daily quota and translation quality varies. Tone rewriting,
+AI tutoring and synced accounts remain available only with a configured backend.
 See [GitHub Pages setup and backend connection](deployment/GITHUB_PAGES.md).
 The Pages workflow publishes the frontend automatically from `master`.
 
